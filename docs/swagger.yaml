@@ -1,0 +1,397 @@
+basePath: /
+definitions:
+  task-manager_internal_entities.Task:
+    properties:
+      assigneeID:
+        description: User assigned to the task
+        type: integer
+      createdAt:
+        description: Timestamp when the task was created
+        type: string
+      description:
+        description: Optional task description
+        type: string
+      id:
+        description: Primary key
+        type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/task-manager_internal_entities.TaskStatus'
+        description: Current task status
+      title:
+        description: Task title
+        type: string
+      updatedAt:
+        description: Timestamp when the task was last updated
+        type: string
+    type: object
+  task-manager_internal_entities.TaskStatus:
+    enum:
+    - pending
+    - in_progress
+    - done
+    - canceled
+    type: string
+    x-enum-varnames:
+    - TaskStatusPending
+    - TaskStatusInProgress
+    - TaskStatusDone
+    - TaskStatusCanceled
+  task-manager_pkg_rest.PaginationMeta:
+    properties:
+      page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  task-manager_pkg_rest.ResponseStatus:
+    enum:
+    - ok
+    - fail
+    type: string
+    x-enum-varnames:
+    - OK
+    - Fail
+  task-manager_pkg_rest.StandardResponse:
+    properties:
+      data: {}
+      errors:
+        items:
+          type: string
+        type: array
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/task-manager_pkg_rest.PaginationMeta'
+      status:
+        $ref: '#/definitions/task-manager_pkg_rest.ResponseStatus'
+    type: object
+  internal_http.CreateTaskRequest:
+    properties:
+      assignee_id:
+        type: integer
+      description:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/task-manager_internal_entities.TaskStatus'
+        description: optional, default pending
+      title:
+        type: string
+    required:
+    - assignee_id
+    - title
+    type: object
+  internal_http.TaskResponse:
+    properties:
+      assignee_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/task-manager_internal_entities.TaskStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - assignee_id
+    type: object
+  internal_http.UpdateTaskRequest:
+    properties:
+      assignee_id:
+        type: integer
+      description:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/task-manager_internal_entities.TaskStatus'
+        enum:
+        - pending
+        - in_progress
+        - done
+        - canceled
+      title:
+        type: string
+    required:
+    - assignee_id
+    - status
+    - title
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API documentation for Go My Project
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Go My Project API
+  version: "1.0"
+paths:
+  /api/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of tasks with optional filters.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of tasks per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Filter by any task field (e.g., title, status)
+        in: query
+        name: filter
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tasks successfully fetched
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                ' meta':
+                  $ref: '#/definitions/task-manager_pkg_rest.PaginationMeta'
+                data:
+                  items:
+                    $ref: '#/definitions/task-manager_internal_entities.Task'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: List tasks
+      tags:
+      - Tasks
+  /api/tasks/:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task with a title, description, status, and assignee.
+      parameters:
+      - description: Task creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task successfully created
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_http.TaskResponse'
+              type: object
+        "400":
+          description: Invalid request payload or invalid task status
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Create a new task
+      tags:
+      - Tasks
+  /api/tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing task identified by its ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Task successfully deleted
+        "400":
+          description: Invalid task ID
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "404":
+          description: Task not found
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Delete a task
+      tags:
+      - Tasks
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the details of a specific task using its ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task successfully fetched
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_http.TaskResponse'
+              type: object
+        "400":
+          description: Invalid task ID
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "404":
+          description: Task not found
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Get task by ID
+      tags:
+      - Tasks
+    put:
+      consumes:
+      - application/json
+      description: Updates the details of an existing task such as title, description,
+        status, and assignee.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated task data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task successfully updated
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_http.TaskResponse'
+              type: object
+        "400":
+          description: Invalid task ID or request payload
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "404":
+          description: Task not found
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/task-manager_pkg_rest.StandardResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Update an existing task
+      tags:
+      - Tasks
+schemes:
+- http
+swagger: "2.0"
+tags:
+- description: Task management endpoints
+  name: Tasks

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UpdateTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Updated title of the task"
+    },
+    "description": {
+      "type": "string",
+      "description": "Updated description of the task"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "done", "canceled"],
+      "description": "Updated status of the task"
+    },
+    "assignee_id": {
+      "type": "integer",
+      "description": "Updated assignee ID"
+    }
+  },
+  "required": ["title", "status", "assignee_id"],
+  "additionalProperties": false
+}

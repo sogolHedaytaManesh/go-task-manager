@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CreateTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the task"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the task"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "done", "canceled"],
+      "description": "Status of the task (optional, default: pending)"
+    },
+    "assignee_id": {
+      "type": "integer",
+      "description": "ID of the user assigned to the task"
+    }
+  },
+  "required": ["title", "assignee_id"],
+  "additionalProperties": false
+}
